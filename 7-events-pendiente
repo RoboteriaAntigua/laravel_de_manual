@@ -1,0 +1,4 @@
+events en laravel son una forma simple de implementar el patron 'observer'.
+
+Podemos hacer que una clase tenga alguna variable observable y las clases que se subscriban
+obtengan el estado de dicha variable en tiempo real.

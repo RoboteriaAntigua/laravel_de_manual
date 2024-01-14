@@ -1,0 +1,72 @@
+# De la tabla nombres Al controlador lo llame nombres deberia haber sido nombresController
+# De la tabla nombres al modelo orm lo llame nombre deberia haber sido nombreModel
+
+# En la migracion, $table->Timestamps() crea automaticamente las columnas created_at y updated_at
+
+# Resumen create/store:
+        welcome.blade -> tiene links a la vista create
+        create.blade -> tiene un form que tiene action= /store
+        web.php /store-> Apunta al metodo store del controlador nombres
+        controlador 'store'-> $nuevo= nombre::create($request->all());  crea registro
+        Nota: /edit muestra solo la vista con el formulario edit.
+
+# Chunk permite cargar un modelo de a  poco para cierta logica: No se si para vistas
+    nombre::chunk(10, function (Collection $pedazo) {
+            foreach ($pedazo as $pedazo) {
+                // ...
+            }
+
+        });
+
+# Para retornar vista con chunk y paginate:
+    En el controlador (Muestro paginas de 2 resultados o x resultados):
+                public function indexChunk(){
+                    $paginas = nombre::paginate(2);
+                    return view('show')->with('pagina', $paginas);
+                }
+    En la vista recibo: $paginas
+    @foreach($pagina->chunk(10) as $fila)
+            @foreach($fila as $item)
+                {{ $item->nombre }}
+                {{ $item->email }}
+                {{$item->edad}}<br>
+            @endforeach
+    @endforeach
+        {{ $pagina->links() }}
+
+
+# Insertar data con modelo orm:
+        $flight = new Flight;
+        $flight->name = $request->name;
+        $flight->save();
+        return redirect('/flights');
+        o manualmente:
+            $flight = Flight::create([
+                        'name' => 'London to Paris',
+                            ]);
+        o con asignacion masiva:
+            $flight = Flight::create( $request->all() );
+
+
+# Update data con orm:
+    $flight = Flight::find(1);
+
+    $flight->name = 'Paris to London';
+
+    $flight->save();
+
+    o con asignacion masiva:
+        $flight->update($request->all())
+
+# Update Con where:
+        Flight::where('active', 1)
+                ->where('destination', 'San Diego')
+                ->update(['demorado' => 1]);
+
+
+# En el modelo decimos que columnas estan habilitadas o todas:
+    Todas: protected $guarded = [];
+    columnas x: protected $fillable = [col1,col3];
+
+
+# Observer y mutators falta

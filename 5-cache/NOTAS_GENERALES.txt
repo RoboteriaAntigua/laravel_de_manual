@@ -1,0 +1,55 @@
+# Cache en Laravel
+
+# En config/cache.php podemos ver de configurar que conexion a cache vamos a usar:
+    Disponibles:
+                "apc", "array", "database", "file",
+    |         "memcached", "redis", "dynamodb", "octane", "null"
+
+    Por defecto 'file': 'default' => env('CACHE_DRIVER', 'file'),  Aqui le cambiamos
+
+# Guardar datos en cache:
+    Cache::store('file')->put('key1','value1',600);     //600 corresponde a 10 minutos de guardado.
+    Cache::put($key,$value,time);   //No hace falta el store('file') ya esta por default
+
+# ---------------- Ver mas completo en el web.php ---------------------------------#
+# Recuperar datos de cache:
+    $valor = Cache::store('file')->get('key1');
+    $valor2 = Cache::get('key2');
+
+# Preguntar si existe cierta key en cache
+    if(Cache::has('key')){
+        //
+    }
+
+# Add si es que existe:
+    Cache::add('key3', 0, now()->addHours(4));
+
+# Incrementar una key
+    Cache::increment('key3');
+
+# Recuperar si existe y sino guardar de una tabla, ejemplo todos los items de la tabla users
+    $value = Cache::remember('users', $seconds, function () {
+        return DB::table('users')->get();
+    });
+
+# Recuperar y borrar:
+    $value = Cache::pull('key');
+
+# Guardar datos forever:
+    Cache::forever('key', 'value');
+
+
+# Remover datos de cache: hay varias formas
+    Cache::forget('key');
+    Otra es otorgando tiempo 0 o negativo:
+        Cache::put('key', 'value', 0);
+        Cache::put('key', 'value', -5);
+
+# Borrar todo el cache (de todas las aplicaciones)
+    Cache::flush();
+
+
+# El helper
+    $value = cache('key');
+    cache(['key' => 'value'], $seconds);
+    cache(['key' => 'value'], now()->addMinutes(10));

@@ -1,0 +1,70 @@
+
+
+# 1 El public/index.php es el punto de partida, en el se carga una instancia de aplicacion laravel del bootstrap/app.php
+    Lo primero que hace laravel por si mismo, es crear una instancia de la aplicacion /service container
+
+# 2 Todas las solicitudes pasan por el app/http/kernell.php:
+        -> Error handling
+        -> configure loggin
+        -> middleware
+
+# 3 Service providers / proveedores de servicio:
+    -> Agregan funcionalidad al framework. Mediante la funcion register quedan registrados y listo quedan disponibles para toda la app
+    ->Son configurados en config/app.php en el providers array
+    ->Casi todos las caracteristicas de laravel son inicializadas y configuradas por un service provider
+    -> Por ejemplo nuestro router  en App\Providers\RouteServiceProvider
+
+# 4 Inyeccion de dependencias en laravel
+
+    use App\Repositories\UserRepository;
+
+    class UserController extends Controller
+    {
+        // Constructor
+
+        public function __construct( protected UserRepository $injectado ) {}
+
+        public function show(string $id): View
+        {
+            $user = $this->injectado->find($id);
+            return view('lala', ['user' => $user]);
+        }
+    }
+
+# 5 Service provider
+    Se pueden usar cuando hay Inyeccion de dependencias, cuando una de una de nuestras clases depende de otra, o
+    implementa una interfaz.
+
+        php artisan make:provider primerServiceProvider
+
+    Lo en contramos en:
+        app/Providers/primerServiceProvider.php
+
+    Luego le agregamos en config/app.php en el arreglo de providers:
+        App\Providers\primerServiceProvider::class,
+
+    Creo la carpeta App/myClases y en ella las clases foo.php y baz.php
+
+    Para inyectar la clase baz en foo, voy al service provider en el metodo register algo asi:
+        $this->app->singleton(Foo::class, function($app){
+            return new Foo( new Baz('pepeto'));
+        });
+
+    En web.php: Inyectamos Foo y vemos que Foo ya tiene el atributo var1 el cual le hemos asignado el name de baz
+
+        Route::get('/', function (Foo $foo) {
+            //dd( $foo);
+            return  "averte $foo->var1";
+            });
+
+    //COnclusion: Cuando una clase va a tener inyectada otra clase, en repetidas veces, lo hacemos en service provider y ya queda fijo.
+    // Util cuando creamos packetes para laravel o Para clases con muchas dependencias, luego al usarla ya queda limpia.
+
+
+
+--------------- Extras -----------------------------------
+# 6 php artisan -> vemos todos los comandos de artisan
+
+# 7 foo = cualquier cosa alternativamente baz.
+
+# la funcion dd($algo) imprime en el navegador una salida de consola

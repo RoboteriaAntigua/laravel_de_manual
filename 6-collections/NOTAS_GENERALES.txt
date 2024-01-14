@@ -1,0 +1,18 @@
+
+# Colecciones, Nota: Los resultados de las querys Eloquent siempre retornan colecciones
+
+# create: $colectivo = collect([1, 2, 3,"tete"]);
+
+
+# Agregar metodos custom para las colecciones:
+   use Illuminate\Support\Collection;
+    Collection::macro('metodo_random', function () {
+        return $this->map(function (string $value) { return "$value+";});
+    });
+
+    $cole = collect(['first', 'second','tres',4,5]);
+
+    $mapeado = $cole->metodo_random();
+    return $mapeado;                                        //retorna first+second+tres+4+5 (Mapea agregando + a cada elemento)
+
+# Hay una banda de metodos, algunos con sus ejemplos los cuelgo directo en web.php

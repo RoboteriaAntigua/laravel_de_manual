@@ -1,0 +1,23 @@
+# En el controlador UserController esta definido el metodo login.
+    Metodo login:
+        -Recupera del modelo user la fila a donde el email (clave primaria) es coincidencia.
+        $usuario= User::where('email',$request->email)->get();
+
+        -Pregunta si el usuario existe con isset y luego si el email y pass son correctos
+
+        -Faltaria crear coockie con session('')
+
+# Faltaria middleware que pregunte si hay coockie ( session('key1')) si la hay dejar pasar sino redirigir a /login
+
+# Faltaria metodo register del controlador
+
+# En la vista welcome.php usamos las directivas de blade para preguntar si hay sesion. Igualmente hace falta middleware
+    @if ({{session('login')}})
+                <div>
+                        <a href="{{ url('/home') }}" >Home</a>
+                    @else
+                        <a href="{{ route('/login') }}">Log in</a>
+                        <a href="{{ route('register') }}">Register</a>
+
+                </div>
+            @endif
