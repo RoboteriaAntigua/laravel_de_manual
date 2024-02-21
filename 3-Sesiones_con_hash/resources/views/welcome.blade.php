@@ -85,14 +85,26 @@
         <h2>Es lo mismo obtener el usuario con el modelo que con el request o con el Auth:: ??????</h2>
         <a href="/superGet">Obtener</a>
 
+
+        <h1>Middleware </h1>
+        
+        <p>------------------------------------------------------------------------------</p>
+        <h2>Probar ruta protejida con middleware sanctum<h2>
+            <a href="/protejida1">Ir a ruta protejida1</a>
+
+
+        <h1>API y llamadas httpClient externas </h1>
+        
+        <p>------------------------------------------------------------------------------</p>
         <h2>CreateToken con user traido del modelo: User::where(etc..)</h2>
             <a href="/createToken">Create token con User::</a>
 
             <h2>Borrar tokens de usuario con $request->user()->tokens()->delete()</h2>
                 <a href="/deleteToken">deleteTokens</a>
 
-        <h2>Probar ruta protejida con middleware sanctum<h2>
-        <a href="/protejida1">Ir a ruta protejida1</a>
+            <h2>Obtener el token del header, $request->bearerToken() </h2>
+                <a href="/getBearer">Mostrar token</a>
+        <p>------------------------------------------------------------------------------</p>
 
     </body>
 </html>
