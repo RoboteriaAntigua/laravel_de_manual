@@ -1,0 +1,7 @@
+# Recuperar un proyecto laravel de git
+    git clone
+    composer install
+    php artisan key:generate
+    .env
+    migrate
+    listo!

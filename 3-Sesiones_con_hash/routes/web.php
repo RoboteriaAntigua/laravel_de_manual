@@ -1,49 +1,11 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Sesiones laravel
-|--------------------------------------------------------------------------
-|
-|   1-Se configuran en el config\session.php
 
-            driver -> aqui es a donde se alojan las sesiones:
-                opciones:
-                    file - son guardadas en storage/framework/sessions.
-                    cookie - en encrypted cookies.
-                    database - sessions son guardadas en relational database.
-                    memcached / redis - sessions are stored in one of these fast, cache based stores.
-                    array - sessions son guardadas en un PHP array and will not be persisted.
-
-                pre-requisitos para el guardado en BAses de datos (driver prerequisites):
-                    Una tabla llamada sessions con ciertos campos, podemos crear automaticamente con:
-                        php artisan session:table
-                        php artisan migrate
-
-    2-Como usar las sesiones laravel:
-        a-Recuperar la sesion del navegador A travez del request, en el controlador:
-                public function show(Request $request, $id)
-                    {
-                        $value = $request->session()->get('key');
-
-                        //
-                    }
-
-                    Si la key de sesion no existe podemos ejecutar una funcion que se ejecute:
-                        $value = $request->session()->get('key', function () {
-                            return 'default';
-                            });
-                            o
-                            $value = $request->session()->get('key', 'default');
-
-        b-Con el helper session()
-
-        Nota: el request es desde el backend en cambio el helper se puede incrustar en el front
-
-        */
 //******************************Uso del helper de session**********************************
+
 Route::get('/sesiones', function () {
     //Guardar en la sesion
     session(['key' => 'un valor 123']);     //La cookie guardada se llama: laravel_session
@@ -70,10 +32,13 @@ Route::get('/sesiones_varias', function () {
     return "recuperado de la sesiones: $value1 y $value2";
 });
 
+
 //******************************Con el request:********************************
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
+use PhpParser\Parser\Tokens;
 
 Route::get('/sesiones_request', function (Request $request){
     //Establecer una sesion
@@ -84,27 +49,16 @@ Route::get('/sesiones_request', function (Request $request){
 
     /*******************Determinar si existe una session************** */
     if($request->session()->has('clave1')){
-        return "existe la session y es $recuperada";
+        $token = $request->session()->token();
+        return "existe la session y es $recuperada y el token es: $token";
     }
+    
 });
 
-/****************************Olvidar sesiones*********************************/
-
-/*
- * // Forget a single key...
-$request->session()->forget('key');
-
-// Forget multiple keys...
-$request->session()->forget(['key1', 'key2']);
-
-//olvidar todas las sessiones
-$request->session()->flush();
-
-*/
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('index');
 
 
 /* Para encriptar algo directamente aca*/
@@ -148,7 +102,7 @@ Route::get('/seguro', function(){
     //chequeo
     if( Hash::check('123',$desencanto)){
         return 'desencriptado y chequeado con exito';
-    }else { return 'no';}
+    } else { return 'no';}
 });
 
 
@@ -160,3 +114,162 @@ Route::get('/seguro', function(){
 //Reseteando un pass
 //Laravel tambien lo provee en auth
 
+
+
+/****************************Sesiones y seguridad, regenerar, olvidar etc*********************************/
+Route::get('/borrarSesiones', function(Request $request){
+
+    //Si la session existe, invalidar key1:
+    
+    if( $request->session()->has('key1') ) {
+
+        $request->session()->invalidate();  // Esto regenera un token de session automaticamente, pero Breeze igual le hace:
+        $request->session()->regenerateToken();
+        
+        
+        return 'sesiones invalidadas';
+    }
+
+    return 'No habia sesion con key: clave1';
+
+    /*
+         * // Forget a single key...
+        $request->session()->forget('key1');
+
+        // Forget multiple keys...
+        $request->session()->forget(['key1', 'key2']);
+
+        //olvidar todas las sessiones
+        $request->session()->flush();
+*/
+});
+
+
+/************** Obtener el token de sesion, regenerarlo y  */
+Route::get('/tokens', function(Request $request){
+    $token = $request->session()->token();
+    return redirect('/')->with('message',"el token es:". $token);
+});
+
+//Regenerar el token de session
+Route::get('/regenerarToken', function(Request $request){
+    $tokenViejo = $request->session()->token();
+    $request->session()->regenerateToken();
+    $token = $request->session()->token();
+    return redirect('/')->with('message','TOken viejo: '.$tokenViejo." Token regenerado: ".$token);
+});
+
+//Regenerar el id de session 
+Route::get('/regenerarID', function(Request $request){
+    $request->session()->regenerate();      //Regenera token y Id de sesion
+    $token = $request->session()->token();  //Token de la sesion
+    $id = $request->session()->getId();     //Id de la sesion
+    $idUser = Auth::id();                   //Id del usuario authenticado, si lo hay
+    return redirect('/')->with('message','Regenerada la session, nuevo token: '.$token. "El id de session: ".$id. " no confundir con el id de usuario que es: ".$idUser);
+});
+
+//Crear un Usuario:
+Route::get('/crear', function(Request $request){
+    $user = User::create([
+        'name'=> 'Bartola',
+        'email'=>'bartola@gmail.com',
+        'password'=>Hash::make('12345678')
+    ]);
+    
+    return redirect('/')->with('message',$user);
+});
+
+//Borrar un usuario
+Route::get('/borrarUser', function(){
+     User::where('email','bartola@gmail.com')->delete();
+     return redirect('/')->with('message','Usuario borrado');
+});
+
+//Obtener usuario Autenticado en el facade Auth
+Route::get('/autenticado', function(){
+    return redirect('/')->with('message', 'El usuario autenticado es: '.Auth::user());
+});
+
+//Authenticar usuario con Facade Auth::login -> LOGIN
+Route::get('/autenticar', function(){
+    $user= User::where('email','bartola@gmail.com')->first();
+    Auth::login($user);
+    //Auth::authenticate($user); //Usa una ruta que debemos crear con el nombre 'login'
+    return redirect('/')->with('message', 'Autenticado'); 
+});
+
+//Logout
+Route::get('/logout', function(){
+    Auth::logout();
+    return redirect('/')->with('message','Has salido de sesion');
+});
+
+//Obtener usuario del modelo solo con el mail
+Route::get('/getUserModel', function(){
+    $user= User::where('email','bartola@gmail.com')->first();
+    return redirect('/')->with('message','El usuario es: '.$user); 
+});
+
+
+
+//Obtener el usuario authenticado si lo hay con el request
+Route::get('/getUserRequest', function(Request $request){
+    $user = $request->user();
+    return redirect('/')->with('message','El usuario authenticado obteneido con el request es: '.$user);
+});
+
+//Chequear si el usuario esta authenticado
+Route::get('/check', function(Request $request){
+    $user = $request->user();
+    if ( Auth::check($user)){
+        return redirect('/')->with('message','usuario esta authenticado');
+    }
+    return redirect('/')->with('message', 'Usuario no autenticado');
+});
+
+//Attemp para saber si el usuario existe y el password es correcto
+Route::get('/attemp', function(Request $request){
+    if( ! Auth::attempt( $request->only('email','password'))){
+        return response()->json(['message'=>'No autorizado'],401);
+    }
+    $user = $request->user();
+    Auth::login($user);
+    //Auth::login($user, remember:true);    //Esto recuerda el token en la base de datos
+    $token = $request->session()->token();
+    return redirect('/')->with('message', ' Usuario logueado con token: '.$token);
+})->name('attemp');
+
+//Es lo mismo obtener el usuario con el modelo que con el request o con el Auth:: ??????
+Route::get('/superGet', function(Request $request){
+    $userAuth = Auth::user();
+    $userRequest = $request->user();
+    $userModel = User::where('email','bartola@gmail.com')->first();
+    
+    //Respuesta: NO
+    //Obtenido con el Request Y el modelo existe el metodo tokens()->delete()
+    //$userRequest->tokens()->delete(); //No hace nada
+    //$userModel->tokens()->delete();   //No se bien que tokens borra, ni el de session ni el que se guarda en la base de datos.
+
+    return redirect('/')->with('message','Tokens borrados?');
+});
+
+//Crear token es como hacer Auth::login($user) ???
+//Respuesta: si por api y le podemos agregar un header 'token_type'=>'bearer' si es lo mismo.
+//Por navegador tendriamos que agregarselo.
+Route::get('/createToken', function (Request $request){
+    $user= User::where('email','bartola@gmail.com')->first();
+    $token = $user->createToken('auth_token')->plainTextToken;
+    return redirect('/')->with('message','nuevo token: '.$token);
+});
+
+//Eliminar tokens, borra el token creado con createToken, de vuelta, depende de los headers
+Route::get('/deleteToken', function(Request $request){
+        $user = request()->user(); //or Auth::user(), pero no trae el metodo tokens()
+        $user->tokens()->delete();
+        return redirect('/')->with('message','token Eliminado o : ');
+});
+
+//Protejer con middleware
+Route::middleware('auth:sanctum')->get('/protejida1', function(){
+    return redirect('/')->with('message','acceso correcto a ruta protegida1');
+});
